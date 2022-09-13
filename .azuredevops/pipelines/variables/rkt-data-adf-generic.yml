@@ -1,0 +1,22 @@
+parameters:
+  - name: environmentShortName
+    type: string
+    
+variables:
+  # Converting Parameter to Variable to clean access
+  environmentShortName: ${{ parameters.environmentShortName }}
+
+  # Constants
+  companyShortCode: rkt
+  departmentShortCode: data
+  azureResourceGroupLocation: australiaeast
+
+  # Conditional
+  ${{ if eq(variables['environmentShortName'], 'prd') }}:
+    azureSubscription: 'a4e81318-c389-4c72-859c-c95d9405af3c'
+  ${{ else }}:
+    azureSubscription: 'a4e81318-c389-4c72-859c-c95d9405af3c'
+
+  # Generics
+  azureResourceGroupName: 'arg-$(companyShortCode)-$(departmentShortCode)-$(environmentShortName)'
+  davDataFactoryName: 'arg-$(companyShortCode)-$(departmentShortCode)-adf-dev'

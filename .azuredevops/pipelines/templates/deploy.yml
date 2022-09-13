@@ -1,0 +1,52 @@
+parameters:
+- name: azureServiceConnection
+  displayName: Azure Service Connection?
+  type: string
+- name: environmentName
+  displayName: Azure EnvironmentName?
+  type: string
+
+jobs:
+- deployment: Deploy
+  displayName: Deploy to ${{ parameters.environmentName }} Environment
+  pool:
+    vmImage: ubuntu-latest
+  variables:
+    deploymentName: rkt-data
+  environment: ${{ parameters.environmentName }}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          # Deploy Infrastructure
+          - task: AzureCLI@2
+            displayName: Deploy Infrastructure
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az --version
+                az group create --name $(azureResourceGroupName) --location $(azureResourceGroupLocation)
+                az deployment group create \
+                --resource-group $(azureResourceGroupName) \
+                --name $(deploymentName)
+                --template-file $(Pipeline.Workspace)/env/main.bicep \
+                --parameters environment='$(environmentShortName)'
+          
+          - task: AzureCLI@2
+            displayName: Retrieve SQL connector name
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                deploymentOutputs=$(az deployment group show \
+                --resource-group $(azureResourceGroupName) \
+                --name $(deploymentName) \
+                --query properties.outputs | jq -c 'to_entries[] | [.key, .value.value]')
+                echo "$deploymentOutputs" | while IFS=$'\n' read -r c; do
+                  outputname=$(echo "$c" | jq -r '.[0]')
+                  outputvalue=$(echo "$c" | jq -r '.[1]')
+                  echo "##vso[task.setvariable variable=$outputname;]$outputvalue"
+                done
