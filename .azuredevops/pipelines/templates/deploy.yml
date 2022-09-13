@@ -29,7 +29,7 @@ jobs:
                 az --version
                 az group create --name $(azureResourceGroupName) --location $(azureResourceGroupLocation)
                 az deployment group create \
-                --resource-group $(azureResourceGroupName) --name $(deploymentName) --template-file $(Pipeline.Workspace)/env/main.bicep --parameters environment='$(environmentShortName)'
+                --resource-group $(azureResourceGroupName) --name $(deploymentName) --template-file $(Pipeline.Workspace)/env/main.bicep --parameters environmentShortName='$(environmentShortName)'
           
           - task: AzureCLI@2
             displayName: Retrieve SQL connector name
